@@ -15,8 +15,6 @@ use shakmaty::{Board, Chess, File, Move, Position, Rank, Role, Setup, Square};
 use std::collections::HashSet;
 use std::path::Path;
 
-use crate::ai;
-
 use crate::emscripten_file;
 
 const SCR_WIDTH: u32 = 600;
@@ -59,63 +57,39 @@ pub fn init() -> Result<(), String> {
     // load white pieces' sprites. (This is using FEN notation.)
     // credits for sprites: Wikimedia Commons
     // (https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces)
-    let mut w_b: Texture;
-    let mut w_k: Texture;
-    let mut w_n: Texture;
-    let mut w_p: Texture;
-    let mut w_q: Texture;
-    let mut w_r: Texture;
+    let w_b: Texture;
+    let w_k: Texture;
+    let w_n: Texture;
+    let w_p: Texture;
+    let w_q: Texture;
+    let w_r: Texture;
 
     // black's
-    let mut b_b: Texture;
-    let mut b_k: Texture;
-    let mut b_n: Texture;
-    let mut b_p: Texture;
-    let mut b_q: Texture;
-    let mut b_r: Texture;
+    let b_b: Texture;
+    let b_k: Texture;
+    let b_n: Texture;
+    let b_p: Texture;
+    let b_q: Texture;
+    let b_r: Texture;
 
     // completely white texture
-    let mut nothing: Texture;
+    let nothing: Texture;
 
-    if cfg!(not(feature = "windows")) {
-        // load white pieces' sprites.
-        // credits for sprites: Wikimedia Commons
-        // (https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces)
-        w_b = texture_creator.load_texture(Path::new("/usr/share/chess.d/sprites/b_white.png"))?;
-        w_k = texture_creator.load_texture(Path::new("/usr/share/chess.d/sprites/k_white.png"))?;
-        w_n = texture_creator.load_texture(Path::new("/usr/share/chess.d/sprites/n_white.png"))?;
-        w_p = texture_creator.load_texture(Path::new("/usr/share/chess.d/sprites/p_white.png"))?;
-        w_q = texture_creator.load_texture(Path::new("/usr/share/chess.d/sprites/q_white.png"))?;
-        w_r = texture_creator.load_texture(Path::new("/usr/share/chess.d/sprites/r_white.png"))?;
+    w_b = texture_creator.load_texture(Path::new("sprites/b_white.png"))?;
+    w_k = texture_creator.load_texture(Path::new("sprites/k_white.png"))?;
+    w_n = texture_creator.load_texture(Path::new("sprites/n_white.png"))?;
+    w_p = texture_creator.load_texture(Path::new("sprites/p_white.png"))?;
+    w_q = texture_creator.load_texture(Path::new("sprites/q_white.png"))?;
+    w_r = texture_creator.load_texture(Path::new("sprites/r_white.png"))?;
 
-        // black's
-        b_b = texture_creator.load_texture(Path::new("/usr/share/chess.d/sprites/b_black.png"))?;
-        b_k = texture_creator.load_texture(Path::new("/usr/share/chess.d/sprites/k_black.png"))?;
-        b_n = texture_creator.load_texture(Path::new("/usr/share/chess.d/sprites/n_black.png"))?;
-        b_p = texture_creator.load_texture(Path::new("/usr/share/chess.d/sprites/p_black.png"))?;
-        b_q = texture_creator.load_texture(Path::new("/usr/share/chess.d/sprites/q_black.png"))?;
-        b_r = texture_creator.load_texture(Path::new("/usr/share/chess.d/sprites/r_black.png"))?;
+    b_b = texture_creator.load_texture(Path::new("sprites/b_black.png"))?;
+    b_k = texture_creator.load_texture(Path::new("sprites/k_black.png"))?;
+    b_n = texture_creator.load_texture(Path::new("sprites/n_black.png"))?;
+    b_p = texture_creator.load_texture(Path::new("sprites/p_black.png"))?;
+    b_q = texture_creator.load_texture(Path::new("sprites/q_black.png"))?;
+    b_r = texture_creator.load_texture(Path::new("sprites/r_black.png"))?;
 
-        // completely transparent texture
-        nothing =
-            texture_creator.load_texture(Path::new("/usr/share/chess.d/sprites/nothing.png"))?;
-    } else {
-        w_b = texture_creator.load_texture(Path::new("sprites/b_white.png"))?;
-        w_k = texture_creator.load_texture(Path::new("sprites/k_white.png"))?;
-        w_n = texture_creator.load_texture(Path::new("sprites/n_white.png"))?;
-        w_p = texture_creator.load_texture(Path::new("sprites/p_white.png"))?;
-        w_q = texture_creator.load_texture(Path::new("sprites/q_white.png"))?;
-        w_r = texture_creator.load_texture(Path::new("sprites/r_white.png"))?;
-
-        b_b = texture_creator.load_texture(Path::new("sprites/b_black.png"))?;
-        b_k = texture_creator.load_texture(Path::new("sprites/k_black.png"))?;
-        b_n = texture_creator.load_texture(Path::new("sprites/n_black.png"))?;
-        b_p = texture_creator.load_texture(Path::new("sprites/p_black.png"))?;
-        b_q = texture_creator.load_texture(Path::new("sprites/q_black.png"))?;
-        b_r = texture_creator.load_texture(Path::new("sprites/r_black.png"))?;
-
-        nothing = texture_creator.load_texture(Path::new("sprites/nothing.png"))?;
-    }
+    nothing = texture_creator.load_texture(Path::new("sprites/nothing.png"))?;
 
     // This will parse and draw all pieces currently on the game to the window.
     let draw_pieces = |canvas: &mut Canvas<Window>, game: &Board| {
@@ -144,7 +118,6 @@ pub fn init() -> Result<(), String> {
     // We need to set this before the render loop to avoid undefined behaviour,
     // so we just set an arbritary texture to this by now.
     let mut curr_texture: &Texture = &nothing;
-
 
     // arbitrary to avoid undefined behaviour
     let mut prev_click_pos: Square = Square::A1;
@@ -178,13 +151,13 @@ pub fn init() -> Result<(), String> {
                         return;
                     } else {
                         println!("You won! Congratulations!!!");
-                        return
+                        return;
                     }
                 }
 
                 None => {
                     println!("Draw!");
-                    return
+                    return;
                 }
             }
         }
@@ -204,9 +177,9 @@ pub fn init() -> Result<(), String> {
 
         // AI
 
-        if game.turn() == shakmaty::Color::Black {
-            game = game.to_owned().play(&ai::minimax_root(3, &mut game)).unwrap();
-        }
+        // if game.turn() == shakmaty::Color::Black {
+        // game = game.to_owned().play(&ai::minimax_root(3, &mut game)).unwrap();
+        // }
 
         // Abandon all hope, ye who enter here.
         // while a mouse button is pressed, it will fall into this conditional
@@ -218,7 +191,8 @@ pub fn init() -> Result<(), String> {
                 Rank::new((mouse_state.y() / SQR_SIZE as i32) as u32).flip_vertical(),
             )) {
                 Some(color) => {
-                    if color == shakmaty::Color::White {
+                    if color == shakmaty::Color::White || color == shakmaty::Color::Black {
+                        //humaun vs human for now
                         match game.role_at(Square::from_coords(
                             File::new((mouse_state.x() / SQR_SIZE as i32) as u32),
                             Rank::new((mouse_state.y() / SQR_SIZE as i32) as u32).flip_vertical(),
@@ -323,16 +297,18 @@ pub fn init() -> Result<(), String> {
                 Rank::new((mouse_state.y() / SQR_SIZE as i32) as u32).flip_vertical(),
             );
         } else {
-            canvas.copy(
-                curr_texture,
-                None,
-                Rect::new(
-                    (mouse_state.x() / SQR_SIZE as i32) * SQR_SIZE as i32,
-                    (mouse_state.y() / SQR_SIZE as i32) * SQR_SIZE as i32,
-                    SQR_SIZE,
-                    SQR_SIZE,
-                ),
-            ).unwrap();
+            canvas
+                .copy(
+                    curr_texture,
+                    None,
+                    Rect::new(
+                        (mouse_state.x() / SQR_SIZE as i32) * SQR_SIZE as i32,
+                        (mouse_state.y() / SQR_SIZE as i32) * SQR_SIZE as i32,
+                        SQR_SIZE,
+                        SQR_SIZE,
+                    ),
+                )
+                .unwrap();
         }
 
         canvas.present();
@@ -346,10 +322,10 @@ pub fn init() -> Result<(), String> {
 
     if cfg!(target_os = "emscripten") {
         emscripten_file::emscripten_mod::set_main_loop_callback(main_loop);
-    }
-
-    else if cfg!(not(target_os = "emscripten")) {
-        loop { main_loop(); }
+    } else if cfg!(not(target_os = "emscripten")) {
+        loop {
+            main_loop();
+        }
     }
 
     Ok(())

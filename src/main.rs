@@ -1,4 +1,3 @@
-pub mod ai;
 pub mod chess;
 pub mod emscripten_file;
 

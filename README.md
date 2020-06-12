@@ -1,40 +1,11 @@
-# Chess - chess implemented in Rust.
+# shogi GUI
 
-[![Chess](https://img.shields.io/badge/Chess-v0.3.0-green.svg)](https://github.com/Arsukeey/chess)
+(non usi compliant, works in tandem with michaelb/shogai. Other features may be considered)
 
-From my research, this is the first ever Rust implementation of a Chess AI. This was made in 10 days as a Rust exercise.
-
-## Installation
-#### Dependencies:
-- SDL2
-- SDL2_image
-
-If you are on Linux or BSD, simply
-```
-git clone https://github.com/Arsukeey/chess.git
-
-cd chess
-
-sudo ./install.sh
-```
-and then simply run `chess` on your terminal.
-
-If you are on Windows or Mac, 
-download the "portable" or "windows" (according to your OS) [release](https://github.com/Arsukeey/chess/releases), download the sprites and put them in a folder called `sprites`, creating a path like this
-```
-- chess
-|
-|- - chess.exe
-|- -
-   | - sprites
-     | - b_white.png
-     | - ...
-```
+This project is a fork of Arsukeey/chess, big thumbs up to him/her!
+https://github.com/Arsukeey/chess.git
 
 ## Gameplay
-- *To play*, simply drag and drop the pieces. If the movement isn't valid, the game won't let you play that move.
-- *To castle*, Drag the king to the rook.
 
-#### Live Example:
-![Image](https://imgur.com/LBzSHm7.gif)
-
+- _To play_, simply drag and drop the pieces. If the movement isn't valid, the game won't let you play that move.
+- _To castle_, Drag the king to the rook.
