@@ -17,9 +17,9 @@ use std::path::Path;
 
 use crate::emscripten_file;
 
-const SCR_WIDTH: u32 = 600;
+const SCR_WIDTH: u32 = 603;
 
-const SQR_SIZE: u32 = SCR_WIDTH / 8;
+const SQR_SIZE: u32 = SCR_WIDTH / 9;
 
 pub fn init() -> Result<(), String> {
     // sdl things
@@ -54,8 +54,8 @@ pub fn init() -> Result<(), String> {
     // define standard board
     let mut game = Chess::default();
 
-    // load white pieces' sprites. (This is using FEN notation.)
-    // credits for sprites: Wikimedia Commons
+    // load white pieces' src/sprites. (This is using FEN notation.)
+    // credits for src/sprites: Wikimedia Commons
     // (https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces)
     let w_b: Texture;
     let w_k: Texture;
@@ -75,21 +75,21 @@ pub fn init() -> Result<(), String> {
     // completely white texture
     let nothing: Texture;
 
-    w_b = texture_creator.load_texture(Path::new("sprites/b_white.png"))?;
-    w_k = texture_creator.load_texture(Path::new("sprites/k_white.png"))?;
-    w_n = texture_creator.load_texture(Path::new("sprites/n_white.png"))?;
-    w_p = texture_creator.load_texture(Path::new("sprites/p_white.png"))?;
-    w_q = texture_creator.load_texture(Path::new("sprites/q_white.png"))?;
-    w_r = texture_creator.load_texture(Path::new("sprites/r_white.png"))?;
+    w_b = texture_creator.load_texture(Path::new("src/sprites/b_white.png"))?;
+    w_k = texture_creator.load_texture(Path::new("src/sprites/k_white.png"))?;
+    w_n = texture_creator.load_texture(Path::new("src/sprites/n_white.png"))?;
+    w_p = texture_creator.load_texture(Path::new("src/sprites/p_white.png"))?;
+    w_q = texture_creator.load_texture(Path::new("src/sprites/q_white.png"))?;
+    w_r = texture_creator.load_texture(Path::new("src/sprites/r_white.png"))?;
 
-    b_b = texture_creator.load_texture(Path::new("sprites/b_black.png"))?;
-    b_k = texture_creator.load_texture(Path::new("sprites/k_black.png"))?;
-    b_n = texture_creator.load_texture(Path::new("sprites/n_black.png"))?;
-    b_p = texture_creator.load_texture(Path::new("sprites/p_black.png"))?;
-    b_q = texture_creator.load_texture(Path::new("sprites/q_black.png"))?;
-    b_r = texture_creator.load_texture(Path::new("sprites/r_black.png"))?;
+    b_b = texture_creator.load_texture(Path::new("src/sprites/b_black.png"))?;
+    b_k = texture_creator.load_texture(Path::new("src/sprites/k_black.png"))?;
+    b_n = texture_creator.load_texture(Path::new("src/sprites/n_black.png"))?;
+    b_p = texture_creator.load_texture(Path::new("src/sprites/p_black.png"))?;
+    b_q = texture_creator.load_texture(Path::new("src/sprites/q_black.png"))?;
+    b_r = texture_creator.load_texture(Path::new("src/sprites/r_black.png"))?;
 
-    nothing = texture_creator.load_texture(Path::new("sprites/nothing.png"))?;
+    nothing = texture_creator.load_texture(Path::new("src/sprites/nothing.png"))?;
 
     // This will parse and draw all pieces currently on the game to the window.
     let draw_pieces = |canvas: &mut Canvas<Window>, game: &Board| {
@@ -362,10 +362,10 @@ fn draw_piece(canvas: &mut Canvas<Window>, game: &Board, texture: &Texture, i: u
 fn draw_grid(canvas: &mut Canvas<Window>) {
     let mut row = 0;
 
-    while row < 8 {
+    while row < 9 {
         let mut x = row % 2;
 
-        for _ in (row % 2)..(4 + (row % 2)) {
+        for _ in (row % 2)..(5 + (row % 2)) {
             let rect = Rect::new(
                 x * SQR_SIZE as i32,
                 row * SQR_SIZE as i32,
