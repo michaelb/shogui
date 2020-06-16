@@ -10,7 +10,11 @@ use sdl2::render::{Canvas, Texture};
 use sdl2::video::Window;
 use std::{thread, time};
 
-use shakmaty::{Board, Chess, File, Move, Position, Rank, Role, Setup, Square};
+// use shakmaty::{Board, Chess, File, Move, Position, Rank, Role, Setup, Square};
+use shogai::ai::*;
+use shogai::board::*;
+use shogai::piece::*;
+use shogai::position::*;
 
 use std::collections::HashSet;
 use std::path::Path;
@@ -52,65 +56,97 @@ pub fn init() -> Result<(), String> {
     let texture_creator = canvas.texture_creator();
 
     // define standard board
-    let mut game = Chess::default();
+    let mut game = Board::new();
 
     // load white pieces' src/sprites. (This is using FEN notation.)
     // credits for src/sprites: Wikimedia Commons
     // (https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces)
-    let w_b: Texture;
-    let w_k: Texture;
-    let w_n: Texture;
-    let w_p: Texture;
-    let w_q: Texture;
-    let w_r: Texture;
+    // completely transparent texture
+    let nothing = texture_creator.load_texture(Path::new("src/sprites/nothing.png"))?;
 
-    // black's
-    let b_b: Texture;
-    let b_k: Texture;
-    let b_n: Texture;
-    let b_p: Texture;
-    let b_q: Texture;
-    let b_r: Texture;
+    let w_k = texture_creator.load_texture(Path::new("src/sprites/white/k.png"))?;
+    let w_r = texture_creator.load_texture(Path::new("src/sprites/white/r.png"))?;
+    let w_b = texture_creator.load_texture(Path::new("src/sprites/white/b.png"))?;
+    let w_p = texture_creator.load_texture(Path::new("src/sprites/white/p.png"))?;
+    let w_n = texture_creator.load_texture(Path::new("src/sprites/white/n.png"))?;
+    let w_l = texture_creator.load_texture(Path::new("src/sprites/white/l.png"))?;
+    let w_g = texture_creator.load_texture(Path::new("src/sprites/white/g.png"))?;
+    let w_s = texture_creator.load_texture(Path::new("src/sprites/white/s.png"))?;
 
-    // completely white texture
-    let nothing: Texture;
+    let w_bp = texture_creator.load_texture(Path::new("src/sprites/white/bp.png"))?;
+    let w_rp = texture_creator.load_texture(Path::new("src/sprites/white/rp.png"))?;
+    let w_pp = texture_creator.load_texture(Path::new("src/sprites/white/pp.png"))?;
+    let w_lp = texture_creator.load_texture(Path::new("src/sprites/white/lp.png"))?;
+    let w_np = texture_creator.load_texture(Path::new("src/sprites/white/np.png"))?;
+    let w_sp = texture_creator.load_texture(Path::new("src/sprites/white/sp.png"))?;
 
-    w_b = texture_creator.load_texture(Path::new("src/sprites/b_white.png"))?;
-    w_k = texture_creator.load_texture(Path::new("src/sprites/k_white.png"))?;
-    w_n = texture_creator.load_texture(Path::new("src/sprites/n_white.png"))?;
-    w_p = texture_creator.load_texture(Path::new("src/sprites/p_white.png"))?;
-    w_q = texture_creator.load_texture(Path::new("src/sprites/q_white.png"))?;
-    w_r = texture_creator.load_texture(Path::new("src/sprites/r_white.png"))?;
+    let b_k = texture_creator.load_texture(Path::new("src/sprites/black/k.png"))?;
+    let b_r = texture_creator.load_texture(Path::new("src/sprites/black/r.png"))?;
+    let b_b = texture_creator.load_texture(Path::new("src/sprites/black/b.png"))?;
+    let b_p = texture_creator.load_texture(Path::new("src/sprites/black/p.png"))?;
+    let b_n = texture_creator.load_texture(Path::new("src/sprites/black/n.png"))?;
+    let b_l = texture_creator.load_texture(Path::new("src/sprites/black/l.png"))?;
+    let b_g = texture_creator.load_texture(Path::new("src/sprites/black/g.png"))?;
+    let b_s = texture_creator.load_texture(Path::new("src/sprites/black/s.png"))?;
 
-    b_b = texture_creator.load_texture(Path::new("src/sprites/b_black.png"))?;
-    b_k = texture_creator.load_texture(Path::new("src/sprites/k_black.png"))?;
-    b_n = texture_creator.load_texture(Path::new("src/sprites/n_black.png"))?;
-    b_p = texture_creator.load_texture(Path::new("src/sprites/p_black.png"))?;
-    b_q = texture_creator.load_texture(Path::new("src/sprites/q_black.png"))?;
-    b_r = texture_creator.load_texture(Path::new("src/sprites/r_black.png"))?;
-
-    nothing = texture_creator.load_texture(Path::new("src/sprites/nothing.png"))?;
+    let b_bp = texture_creator.load_texture(Path::new("src/sprites/black/bp.png"))?;
+    let b_rp = texture_creator.load_texture(Path::new("src/sprites/black/rp.png"))?;
+    let b_pp = texture_creator.load_texture(Path::new("src/sprites/black/pp.png"))?;
+    let b_lp = texture_creator.load_texture(Path::new("src/sprites/black/lp.png"))?;
+    let b_np = texture_creator.load_texture(Path::new("src/sprites/black/np.png"))?;
+    let b_sp = texture_creator.load_texture(Path::new("src/sprites/black/sp.png"))?;
 
     // This will parse and draw all pieces currently on the game to the window.
-    let draw_pieces = |canvas: &mut Canvas<Window>, game: &Board| {
-        for i in 0..game.pieces().len() {
-            match game.pieces().nth(i).unwrap().1.color {
-                shakmaty::Color::White => match game.pieces().nth(i).unwrap().1.role {
-                    Role::Pawn => draw_piece(canvas, &game, &w_p, i),
-                    Role::Queen => draw_piece(canvas, &game, &w_q, i),
-                    Role::Bishop => draw_piece(canvas, &game, &w_b, i),
-                    Role::Rook => draw_piece(canvas, &game, &w_r, i),
-                    Role::Knight => draw_piece(canvas, &game, &w_n, i),
-                    Role::King => draw_piece(canvas, &game, &w_k, i),
-                },
-                shakmaty::Color::Black => match game.pieces().nth(i).unwrap().1.role {
-                    Role::Pawn => draw_piece(canvas, &game, &b_p, i),
-                    Role::Queen => draw_piece(canvas, &game, &b_q, i),
-                    Role::Bishop => draw_piece(canvas, &game, &b_b, i),
-                    Role::Rook => draw_piece(canvas, &game, &b_r, i),
-                    Role::Knight => draw_piece(canvas, &game, &b_n, i),
-                    Role::King => draw_piece(canvas, &game, &b_k, i),
-                },
+    let draw_pieces = |canvas: &mut Canvas<Window>, b: &Board| {
+        for piece in b.iter() {
+            if let Some(i) = piece.position {
+                if piece.promoted {
+                    match piece.color {
+                        shogai::piece::Color::White => match piece.piecetype {
+                            PieceType::Pawn => draw_piece(canvas, &game, &w_pp, i.0),
+                            PieceType::Bishop => draw_piece(canvas, &game, &w_bp, i.0),
+                            PieceType::Rook => draw_piece(canvas, &game, &w_rp, i.0),
+                            PieceType::Knight => draw_piece(canvas, &game, &w_np, i.0),
+                            PieceType::King => draw_piece(canvas, &game, &w_k, i.0),
+                            PieceType::Gold => draw_piece(canvas, &game, &w_g, i.0),
+                            PieceType::Lance => draw_piece(canvas, &game, &w_lp, i.0),
+                            PieceType::Silver => draw_piece(canvas, &game, &w_sp, i.0),
+                        },
+                        shogai::piece::Color::Black => match piece.piecetype {
+                            PieceType::Pawn => draw_piece(canvas, &game, &b_pp, i.0),
+                            PieceType::Bishop => draw_piece(canvas, &game, &b_bp, i.0),
+                            PieceType::Rook => draw_piece(canvas, &game, &b_rp, i.0),
+                            PieceType::Knight => draw_piece(canvas, &game, &b_np, i.0),
+                            PieceType::King => draw_piece(canvas, &game, &b_k, i.0),
+                            PieceType::Gold => draw_piece(canvas, &game, &b_g, i.0),
+                            PieceType::Lance => draw_piece(canvas, &game, &b_lp, i.0),
+                            PieceType::Silver => draw_piece(canvas, &game, &b_sp, i.0),
+                        },
+                    }
+                } else {
+                    match piece.color {
+                        shogai::piece::Color::White => match piece.piecetype {
+                            PieceType::Pawn => draw_piece(canvas, &game, &w_p, i.0),
+                            PieceType::Bishop => draw_piece(canvas, &game, &w_b, i.0),
+                            PieceType::Rook => draw_piece(canvas, &game, &w_r, i.0),
+                            PieceType::Knight => draw_piece(canvas, &game, &w_n, i.0),
+                            PieceType::King => draw_piece(canvas, &game, &w_k, i.0),
+                            PieceType::Gold => draw_piece(canvas, &game, &w_g, i.0),
+                            PieceType::Lance => draw_piece(canvas, &game, &w_l, i.0),
+                            PieceType::Silver => draw_piece(canvas, &game, &w_s, i.0),
+                        },
+                        shogai::piece::Color::Black => match piece.piecetype {
+                            PieceType::Pawn => draw_piece(canvas, &game, &b_p, i.0),
+                            PieceType::Bishop => draw_piece(canvas, &game, &b_b, i.0),
+                            PieceType::Rook => draw_piece(canvas, &game, &b_r, i.0),
+                            PieceType::Knight => draw_piece(canvas, &game, &b_n, i.0),
+                            PieceType::King => draw_piece(canvas, &game, &b_k, i.0),
+                            PieceType::Gold => draw_piece(canvas, &game, &b_g, i.0),
+                            PieceType::Lance => draw_piece(canvas, &game, &b_l, i.0),
+                            PieceType::Silver => draw_piece(canvas, &game, &b_s, i.0),
+                        },
+                    }
+                }
             }
         }
     };
@@ -120,15 +156,15 @@ pub fn init() -> Result<(), String> {
     let mut curr_texture: &Texture = &nothing;
 
     // arbitrary to avoid undefined behaviour
-    let mut prev_click_pos: Square = Square::A1;
+    let mut prev_click_pos: Position = Position(0);
 
-    let mut prev_role_click: Role = Role::Pawn;
-    let mut curr_role_click: Option<Role> = None;
+    let mut prev_role_click: PieceType = PieceType::Pawn;
+    let mut curr_role_click: Option<PieceType> = None;
 
     let mut prev_mouse_buttons = HashSet::new();
 
     let mut main_loop = || {
-        let curr_click_pos: Square;
+        let curr_click_pos: Position;
 
         for event in events.poll_iter() {
             // if esc is pressed, exit main loop
@@ -143,23 +179,9 @@ pub fn init() -> Result<(), String> {
             }
         }
 
-        if let Some(outcome) = game.outcome() {
-            match outcome.winner() {
-                Some(color) => {
-                    if color == shakmaty::Color::Black {
-                        println!("You lost.");
-                        return;
-                    } else {
-                        println!("You won! Congratulations!!!");
-                        return;
-                    }
-                }
-
-                None => {
-                    println!("Draw!");
-                    return;
-                }
-            }
+        if game.game_over() {
+            println!("{:?} has won the game", game.get_color());
+            return;
         }
 
         let mouse_state = events.mouse_state();
@@ -173,7 +195,7 @@ pub fn init() -> Result<(), String> {
 
         draw_check(&game, &mut canvas);
 
-        draw_pieces(&mut canvas, game.board());
+        draw_pieces(&mut canvas, &game);
 
         // AI
 
@@ -333,7 +355,7 @@ pub fn init() -> Result<(), String> {
 
 //-----------------------------------------------------------------------------------
 
-fn draw_piece(canvas: &mut Canvas<Window>, game: &Board, texture: &Texture, i: usize) {
+fn draw_piece(canvas: &mut Canvas<Window>, game: &Board, texture: &Texture, i: u16) {
     canvas
         .copy(
             texture,

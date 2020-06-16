@@ -6,6 +6,8 @@ edition = "2018"
 
 [dependencies]
 shakmaty = "0.15.0"
+shogai="*"
+
 
 [dependencies.sdl2]
 version = "0.32.0"
