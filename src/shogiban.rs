@@ -103,47 +103,47 @@ pub fn init() -> Result<(), String> {
                 if piece.promoted {
                     match piece.color {
                         shogai::piece::Color::White => match piece.piecetype {
-                            PieceType::Pawn => draw_piece(canvas, &game, &w_pp, i.0),
-                            PieceType::Bishop => draw_piece(canvas, &game, &w_bp, i.0),
-                            PieceType::Rook => draw_piece(canvas, &game, &w_rp, i.0),
-                            PieceType::Knight => draw_piece(canvas, &game, &w_np, i.0),
-                            PieceType::King => draw_piece(canvas, &game, &w_k, i.0),
-                            PieceType::Gold => draw_piece(canvas, &game, &w_g, i.0),
-                            PieceType::Lance => draw_piece(canvas, &game, &w_lp, i.0),
-                            PieceType::Silver => draw_piece(canvas, &game, &w_sp, i.0),
+                            PieceType::Pawn => draw_piece(canvas, &game, &w_pp, i),
+                            PieceType::Bishop => draw_piece(canvas, &game, &w_bp, i),
+                            PieceType::Rook => draw_piece(canvas, &game, &w_rp, i),
+                            PieceType::Knight => draw_piece(canvas, &game, &w_np, i),
+                            PieceType::King => draw_piece(canvas, &game, &w_k, i),
+                            PieceType::Gold => draw_piece(canvas, &game, &w_g, i),
+                            PieceType::Lance => draw_piece(canvas, &game, &w_lp, i),
+                            PieceType::Silver => draw_piece(canvas, &game, &w_sp, i),
                         },
                         shogai::piece::Color::Black => match piece.piecetype {
-                            PieceType::Pawn => draw_piece(canvas, &game, &b_pp, i.0),
-                            PieceType::Bishop => draw_piece(canvas, &game, &b_bp, i.0),
-                            PieceType::Rook => draw_piece(canvas, &game, &b_rp, i.0),
-                            PieceType::Knight => draw_piece(canvas, &game, &b_np, i.0),
-                            PieceType::King => draw_piece(canvas, &game, &b_k, i.0),
-                            PieceType::Gold => draw_piece(canvas, &game, &b_g, i.0),
-                            PieceType::Lance => draw_piece(canvas, &game, &b_lp, i.0),
-                            PieceType::Silver => draw_piece(canvas, &game, &b_sp, i.0),
+                            PieceType::Pawn => draw_piece(canvas, &game, &b_pp, i),
+                            PieceType::Bishop => draw_piece(canvas, &game, &b_bp, i),
+                            PieceType::Rook => draw_piece(canvas, &game, &b_rp, i),
+                            PieceType::Knight => draw_piece(canvas, &game, &b_np, i),
+                            PieceType::King => draw_piece(canvas, &game, &b_k, i),
+                            PieceType::Gold => draw_piece(canvas, &game, &b_g, i),
+                            PieceType::Lance => draw_piece(canvas, &game, &b_lp, i),
+                            PieceType::Silver => draw_piece(canvas, &game, &b_sp, i),
                         },
                     }
                 } else {
                     match piece.color {
                         shogai::piece::Color::White => match piece.piecetype {
-                            PieceType::Pawn => draw_piece(canvas, &game, &w_p, i.0),
-                            PieceType::Bishop => draw_piece(canvas, &game, &w_b, i.0),
-                            PieceType::Rook => draw_piece(canvas, &game, &w_r, i.0),
-                            PieceType::Knight => draw_piece(canvas, &game, &w_n, i.0),
-                            PieceType::King => draw_piece(canvas, &game, &w_k, i.0),
-                            PieceType::Gold => draw_piece(canvas, &game, &w_g, i.0),
-                            PieceType::Lance => draw_piece(canvas, &game, &w_l, i.0),
-                            PieceType::Silver => draw_piece(canvas, &game, &w_s, i.0),
+                            PieceType::Pawn => draw_piece(canvas, &game, &w_p, i),
+                            PieceType::Bishop => draw_piece(canvas, &game, &w_b, i),
+                            PieceType::Rook => draw_piece(canvas, &game, &w_r, i),
+                            PieceType::Knight => draw_piece(canvas, &game, &w_n, i),
+                            PieceType::King => draw_piece(canvas, &game, &w_k, i),
+                            PieceType::Gold => draw_piece(canvas, &game, &w_g, i),
+                            PieceType::Lance => draw_piece(canvas, &game, &w_l, i),
+                            PieceType::Silver => draw_piece(canvas, &game, &w_s, i),
                         },
                         shogai::piece::Color::Black => match piece.piecetype {
-                            PieceType::Pawn => draw_piece(canvas, &game, &b_p, i.0),
-                            PieceType::Bishop => draw_piece(canvas, &game, &b_b, i.0),
-                            PieceType::Rook => draw_piece(canvas, &game, &b_r, i.0),
-                            PieceType::Knight => draw_piece(canvas, &game, &b_n, i.0),
-                            PieceType::King => draw_piece(canvas, &game, &b_k, i.0),
-                            PieceType::Gold => draw_piece(canvas, &game, &b_g, i.0),
-                            PieceType::Lance => draw_piece(canvas, &game, &b_l, i.0),
-                            PieceType::Silver => draw_piece(canvas, &game, &b_s, i.0),
+                            PieceType::Pawn => draw_piece(canvas, &game, &b_p, i),
+                            PieceType::Bishop => draw_piece(canvas, &game, &b_b, i),
+                            PieceType::Rook => draw_piece(canvas, &game, &b_r, i),
+                            PieceType::Knight => draw_piece(canvas, &game, &b_n, i),
+                            PieceType::King => draw_piece(canvas, &game, &b_k, i),
+                            PieceType::Gold => draw_piece(canvas, &game, &b_g, i),
+                            PieceType::Lance => draw_piece(canvas, &game, &b_l, i),
+                            PieceType::Silver => draw_piece(canvas, &game, &b_s, i),
                         },
                     }
                 }
@@ -193,7 +193,7 @@ pub fn init() -> Result<(), String> {
         canvas.set_draw_color(Color::RGB(0xFF, 0xCE, 0x9E));
         draw_grid(&mut canvas);
 
-        draw_check(&game, &mut canvas);
+        // draw_check(&game, &mut canvas);
 
         draw_pieces(&mut canvas, &game);
 
@@ -208,28 +208,18 @@ pub fn init() -> Result<(), String> {
         let get_texture = |game: &Board| {
             // TODO: use filter here
             // match is more readable than if let.
-            match game.color_at(Square::from_coords(
-                File::new((mouse_state.x() / SQR_SIZE as i32) as u32),
-                Rank::new((mouse_state.y() / SQR_SIZE as i32) as u32).flip_vertical(),
+            match game.is_occupied_by(Position(
+                (mouse_state.x() / SQR_SIZE as i32) as u16 * 9
+                    + (mouse_state.y() / SQR_SIZE as i32) as u16,
             )) {
-                Some(color) => {
-                    if color == shakmaty::Color::White || color == shakmaty::Color::Black {
+                Some(piece) => {
+                    if piece.color == shogai::piece::Color::White
+                        || piece.color == shogai::piece::Color::Black
+                    {
                         //humaun vs human for now
-                        match game.role_at(Square::from_coords(
-                            File::new((mouse_state.x() / SQR_SIZE as i32) as u32),
-                            Rank::new((mouse_state.y() / SQR_SIZE as i32) as u32).flip_vertical(),
-                        )) {
-                            Some(role) => match role {
-                                Role::King => &w_k,
-                                Role::Knight => &w_n,
-                                Role::Rook => &w_r,
-                                Role::Bishop => &w_b,
-                                Role::Queen => &w_q,
-                                Role::Pawn => &w_p,
-                            },
-
-                            None => &nothing,
-                        }
+                        // match piece.piecetype {
+                        &w_p
+                    // }
                     } else {
                         &nothing
                     }
@@ -241,97 +231,100 @@ pub fn init() -> Result<(), String> {
 
         // necessary to make the borrow checker happy.
         if curr_mouse_buttons.is_empty() {
-            curr_texture = get_texture(game.board());
+            curr_texture = get_texture(&game);
         }
 
-        if game.turn() == shakmaty::Color::White {
-            let is_mouse_released = &prev_mouse_buttons - &curr_mouse_buttons;
-            if !is_mouse_released.is_empty() {
-                curr_role_click = game.board().role_at(Square::from_coords(
-                    File::new((mouse_state.x() / SQR_SIZE as i32) as u32),
-                    Rank::new((mouse_state.y() / SQR_SIZE as i32) as u32).flip_vertical(),
-                ));
-                curr_click_pos = Square::from_coords(
-                    File::new((mouse_state.x() / SQR_SIZE as i32) as u32),
-                    Rank::new((mouse_state.y() / SQR_SIZE as i32) as u32).flip_vertical(),
-                );
-
-                if prev_role_click == Role::Pawn && curr_click_pos.rank() == Rank::new(7) {
-                    if let Ok(game_wrap) = game.to_owned().play(&Move::Normal {
-                        role: Role::Pawn,
-                        from: prev_click_pos,
-                        to: curr_click_pos,
-                        capture: curr_role_click,
-                        promotion: Some(Role::Queen),
-                    }) {
-                        game = game_wrap;
-                    }
-                }
-
-                match game.to_owned().play(&Move::Normal {
-                    role: prev_role_click,
-                    from: prev_click_pos,
-                    to: curr_click_pos,
-                    capture: curr_role_click,
-                    promotion: None,
-                }) {
-                    Ok(game_wrap) => game = game_wrap,
-
-                    Err(_) => draw_error(
-                        ((curr_click_pos.file().char() as u32 - 'a' as u32) * SQR_SIZE) as i32,
-                        ((curr_click_pos.rank().flip_vertical().char() as u32 - '1' as u32)
-                            * SQR_SIZE) as i32,
-                        &mut canvas,
-                    ),
-                }
-
-                if prev_role_click == Role::King {
-                    if let Ok(game_wrap) = game.to_owned().play(&Move::Castle {
-                        king: prev_click_pos,
-                        rook: curr_click_pos,
-                    }) {
-                        game = game_wrap;
-                    }
-                }
-
-                if prev_role_click == Role::Pawn {
-                    if let Ok(game_wrap) = game.to_owned().play(&Move::EnPassant {
-                        from: prev_click_pos,
-                        to: curr_click_pos,
-                    }) {
-                        game = game_wrap;
-                    }
-                }
-            }
-        }
-
-        if curr_mouse_buttons.is_empty() {
-            prev_role_click = game
-                .board()
-                .role_at(Square::from_coords(
-                    File::new((mouse_state.x() / SQR_SIZE as i32) as u32),
-                    Rank::new((mouse_state.y() / SQR_SIZE as i32) as u32).flip_vertical(),
-                ))
-                .unwrap_or(Role::Knight);
-
-            prev_click_pos = Square::from_coords(
-                File::new((mouse_state.x() / SQR_SIZE as i32) as u32),
-                Rank::new((mouse_state.y() / SQR_SIZE as i32) as u32).flip_vertical(),
-            );
-        } else {
-            canvas
-                .copy(
-                    curr_texture,
-                    None,
-                    Rect::new(
-                        (mouse_state.x() / SQR_SIZE as i32) * SQR_SIZE as i32,
-                        (mouse_state.y() / SQR_SIZE as i32) * SQR_SIZE as i32,
-                        SQR_SIZE,
-                        SQR_SIZE,
-                    ),
-                )
-                .unwrap();
-        }
+        // if game.get_turn() {
+        //     let is_mouse_released = &prev_mouse_buttons - &curr_mouse_buttons;
+        //     if !is_mouse_released.is_empty() {
+        //         curr_role_click = match game.is_occupied_by(Position(
+        //             ((mouse_state.x() / SQR_SIZE as i32) as u16) * 9
+        //                 + ((mouse_state.y() / SQR_SIZE as i32) as u16),
+        //         )) {
+        //             None => None,
+        //             Some(piece) => Some(piece.piecetype),
+        //         };
+        //         curr_click_pos = Position(
+        //             ((mouse_state.x() / SQR_SIZE as i32) as u16) * 9
+        //                 + (mouse_state.y() / SQR_SIZE as i32) as u16,
+        //         );
+        //
+        //         if prev_role_click == PieceType::Pawn && curr_click_pos.rank() == Rank::new(7) {
+        //             if let Ok(game_wrap) = game.to_owned().play(&Move::Normal {
+        //                 role: Role::Pawn,
+        //                 from: prev_click_pos,
+        //                 to: curr_click_pos,
+        //                 capture: curr_role_click,
+        //                 promotion: Some(Role::Queen),
+        //             }) {
+        //                 game = game_wrap;
+        //             }
+        //         }
+        //
+        //         match game.to_owned().play(&Move::Normal {
+        //             role: prev_role_click,
+        //             from: prev_click_pos,
+        //             to: curr_click_pos,
+        //             capture: curr_role_click,
+        //             promotion: None,
+        //         }) {
+        //             Ok(game_wrap) => game = game_wrap,
+        //
+        //             Err(_) => draw_error(
+        //                 ((curr_click_pos.file().char() as u32 - 'a' as u32) * SQR_SIZE) as i32,
+        //                 ((curr_click_pos.rank().flip_vertical().char() as u32 - '1' as u32)
+        //                     * SQR_SIZE) as i32,
+        //                 &mut canvas,
+        //             ),
+        //         }
+        //
+        //         if prev_role_click == Role::King {
+        //             if let Ok(game_wrap) = game.to_owned().play(&Move::Castle {
+        //                 king: prev_click_pos,
+        //                 rook: curr_click_pos,
+        //             }) {
+        //                 game = game_wrap;
+        //             }
+        //         }
+        //
+        //         if prev_role_click == Role::Pawn {
+        //             if let Ok(game_wrap) = game.to_owned().play(&Move::EnPassant {
+        //                 from: prev_click_pos,
+        //                 to: curr_click_pos,
+        //             }) {
+        //                 game = game_wrap;
+        //             }
+        //         }
+        //     }
+        // }
+        //
+        // if curr_mouse_buttons.is_empty() {
+        //     prev_role_click = game
+        //         .board()
+        //         .role_at(Square::from_coords(
+        //             File::new((mouse_state.x() / SQR_SIZE as i32) as u32),
+        //             Rank::new((mouse_state.y() / SQR_SIZE as i32) as u32).flip_vertical(),
+        //         ))
+        //         .unwrap_or(Role::Knight);
+        //
+        //     prev_click_pos = Square::from_coords(
+        //         File::new((mouse_state.x() / SQR_SIZE as i32) as u32),
+        //         Rank::new((mouse_state.y() / SQR_SIZE as i32) as u32).flip_vertical(),
+        //     );
+        // } else {
+        //     canvas
+        //         .copy(
+        //             curr_texture,
+        //             None,
+        //             Rect::new(
+        //                 (mouse_state.x() / SQR_SIZE as i32) * SQR_SIZE as i32,
+        //                 (mouse_state.y() / SQR_SIZE as i32) * SQR_SIZE as i32,
+        //                 SQR_SIZE,
+        //                 SQR_SIZE,
+        //             ),
+        //         )
+        //         .unwrap();
+        // }
 
         canvas.present();
 
@@ -355,24 +348,14 @@ pub fn init() -> Result<(), String> {
 
 //-----------------------------------------------------------------------------------
 
-fn draw_piece(canvas: &mut Canvas<Window>, game: &Board, texture: &Texture, i: u16) {
+fn draw_piece(canvas: &mut Canvas<Window>, game: &Board, texture: &Texture, i: Position) {
     canvas
         .copy(
             texture,
             None,
             Rect::new(
-                ((game.pieces().nth(i).unwrap().0.file().char() as u32 - 'a' as u32) * SQR_SIZE)
-                    as i32,
-                ((game
-                    .pieces()
-                    .nth(i)
-                    .unwrap()
-                    .0
-                    .rank()
-                    .flip_vertical()
-                    .char() as u32
-                    - '1' as u32)
-                    * SQR_SIZE) as i32,
+                (i.0 as u32 % 9 * SQR_SIZE) as i32,
+                (i.0 as u32 / 9 * SQR_SIZE) as i32,
                 SQR_SIZE,
                 SQR_SIZE,
             ),
@@ -411,41 +394,41 @@ fn draw_error(x: i32, y: i32, canvas: &mut Canvas<Window>) {
     let _ = canvas.fill_rect(Rect::new(x, y, SQR_SIZE, SQR_SIZE));
     thread::sleep(time::Duration::from_millis(100));
 }
-
-fn draw_check(game: &Chess, canvas: &mut Canvas<Window>) {
-    let pieces = game.board().pieces();
-    let mut white_king_pos: Square = Square::new(0);
-    let mut black_king_pos: Square = Square::new(0);
-
-    for i in 0..pieces.len() {
-        pieces
-            .to_owned()
-            .nth(i)
-            .filter(|piece| piece.1.role == Role::King)
-            .map(|piece| {
-                if piece.1.color == shakmaty::Color::White {
-                    white_king_pos = piece.to_owned().0;
-                } else {
-                    black_king_pos = piece.to_owned().0;
-                }
-            });
-    }
-
-    if game.is_check() {
-        let x: i32;
-        let y: i32;
-
-        if game.turn() == shakmaty::Color::White {
-            x = ((white_king_pos.file().char() as u32 - 'a' as u32) * SQR_SIZE) as i32;
-            y = ((white_king_pos.rank().flip_vertical().char() as u32 - '1' as u32) * SQR_SIZE)
-                as i32;
-        } else {
-            x = ((black_king_pos.file().char() as u32 - 'a' as u32) * SQR_SIZE) as i32;
-            y = ((black_king_pos.rank().flip_vertical().char() as u32 - '1' as u32) * SQR_SIZE)
-                as i32;
-        }
-
-        canvas.set_draw_color(Color::RGB(255, 5, 5));
-        let _ = canvas.fill_rect(Rect::new(x, y, SQR_SIZE, SQR_SIZE));
-    }
-}
+//
+// fn draw_check(game: &Board, canvas: &mut Canvas<Window>) {
+//     let pieces = game.board().pieces();
+//     let mut white_king_pos: Square = Square::new(0);
+//     let mut black_king_pos: Square = Square::new(0);
+//
+//     for i in 0..pieces.len() {
+//         pieces
+//             .to_owned()
+//             .nth(i)
+//             .filter(|piece| piece.1.role == Role::King)
+//             .map(|piece| {
+//                 if piece.1.color == shakmaty::Color::White {
+//                     white_king_pos = piece.to_owned().0;
+//                 } else {
+//                     black_king_pos = piece.to_owned().0;
+//                 }
+//             });
+//     }
+//
+//     if game.is_check() {
+//         let x: i32;
+//         let y: i32;
+//
+//         if game.turn() == shakmaty::Color::White {
+//             x = ((white_king_pos.file().char() as u32 - 'a' as u32) * SQR_SIZE) as i32;
+//             y = ((white_king_pos.rank().flip_vertical().char() as u32 - '1' as u32) * SQR_SIZE)
+//                 as i32;
+//         } else {
+//             x = ((black_king_pos.file().char() as u32 - 'a' as u32) * SQR_SIZE) as i32;
+//             y = ((black_king_pos.rank().flip_vertical().char() as u32 - '1' as u32) * SQR_SIZE)
+//                 as i32;
+//         }
+//
+//         canvas.set_draw_color(Color::RGB(255, 5, 5));
+//         let _ = canvas.fill_rect(Rect::new(x, y, SQR_SIZE, SQR_SIZE));
+//     }
+// }
