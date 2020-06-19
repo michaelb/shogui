@@ -13,6 +13,7 @@ use std::{thread, time};
 // use shakmaty::{Board, Chess, File, Move, Position, Rank, Role, Setup, Square};
 use shogai::ai::*;
 use shogai::board::*;
+use shogai::movement::*;
 use shogai::piece::*;
 use shogai::position::*;
 
@@ -97,8 +98,8 @@ pub fn init() -> Result<(), String> {
     let b_sp = texture_creator.load_texture(Path::new("src/sprites/black/sp.png"))?;
 
     // This will parse and draw all pieces currently on the game to the window.
-    let draw_pieces = |canvas: &mut Canvas<Window>, b: &Board| {
-        for piece in b.iter() {
+    let draw_pieces = |canvas: &mut Canvas<Window>, game: &Board| {
+        for piece in game.iter() {
             if let Some(i) = piece.position {
                 if piece.promoted {
                     match piece.color {
@@ -151,21 +152,32 @@ pub fn init() -> Result<(), String> {
         }
     };
 
+    let get_mouse_position: fn(sdl2::mouse::MouseState) -> Option<Position> = |mouse_state| {
+        Some(Position(
+            (9 - (mouse_state.x() / SQR_SIZE as i32) as u16)
+                + (mouse_state.y() / SQR_SIZE as i32) as u16 * 9
+                - 1,
+        ))
+    };
+
     // We need to set this before the render loop to avoid undefined behaviour,
     // so we just set an arbritary texture to this by now.
     let mut curr_texture: &Texture = &nothing;
 
     // arbitrary to avoid undefined behaviour
-    let mut prev_click_pos: Position = Position(0);
+    let mut prev_click_pos: Option<Position> = None;
 
-    let mut prev_role_click: PieceType = PieceType::Pawn;
+    let mut prev_role_click: Option<PieceType> = None;
     let mut curr_role_click: Option<PieceType> = None;
 
+    let mut curr_click_pos: Option<Position> = None;
     let mut prev_mouse_buttons = HashSet::new();
 
-    let mut main_loop = || {
-        let curr_click_pos: Position;
+    //main loop start ####################################
+    //####################################################
+    //###################################################
 
+    let mut main_loop = || {
         for event in events.poll_iter() {
             // if esc is pressed, exit main loop
             // (consequently ending the program)
@@ -186,17 +198,11 @@ pub fn init() -> Result<(), String> {
 
         let mouse_state = events.mouse_state();
         let curr_mouse_buttons: HashSet<_> = mouse_state.pressed_mouse_buttons().collect();
-
         canvas.set_draw_color(Color::RGB(0xD1, 0x8B, 0x47));
         canvas.clear();
 
         canvas.set_draw_color(Color::RGB(0xFF, 0xCE, 0x9E));
         draw_grid(&mut canvas);
-
-        // draw_check(&game, &mut canvas);
-
-        draw_pieces(&mut canvas, &game);
-
         // AI
 
         // if game.turn() == shakmaty::Color::Black {
@@ -208,142 +214,167 @@ pub fn init() -> Result<(), String> {
         let get_texture = |game: &Board| {
             // TODO: use filter here
             // match is more readable than if let.
-            match game.is_occupied_by(Position(
-                (mouse_state.x() / SQR_SIZE as i32) as u16 * 9
-                    + (mouse_state.y() / SQR_SIZE as i32) as u16,
-            )) {
-                Some(piece) => {
-                    if piece.color == shogai::piece::Color::White
-                        || piece.color == shogai::piece::Color::Black
-                    {
-                        //humaun vs human for now
-                        // match piece.piecetype {
-                        &w_p
-                    // }
-                    } else {
-                        &nothing
-                    }
+            if let Some(pos) = get_mouse_position(mouse_state) {
+                match game.is_occupied_by(pos) {
+                    Some(piece) => &w_p,
+                    None => &nothing,
                 }
-
-                None => &nothing,
+            } else {
+                &nothing
             }
         };
-
+        if let Some(pos) = prev_click_pos {
+            draw_select(pos, &mut canvas);
+        }
         // necessary to make the borrow checker happy.
         if curr_mouse_buttons.is_empty() {
             curr_texture = get_texture(&game);
         }
 
-        // if game.get_turn() {
-        //     let is_mouse_released = &prev_mouse_buttons - &curr_mouse_buttons;
-        //     if !is_mouse_released.is_empty() {
-        //         curr_role_click = match game.is_occupied_by(Position(
-        //             ((mouse_state.x() / SQR_SIZE as i32) as u16) * 9
-        //                 + ((mouse_state.y() / SQR_SIZE as i32) as u16),
-        //         )) {
-        //             None => None,
-        //             Some(piece) => Some(piece.piecetype),
-        //         };
-        //         curr_click_pos = Position(
-        //             ((mouse_state.x() / SQR_SIZE as i32) as u16) * 9
-        //                 + (mouse_state.y() / SQR_SIZE as i32) as u16,
-        //         );
-        //
-        //         if prev_role_click == PieceType::Pawn && curr_click_pos.rank() == Rank::new(7) {
-        //             if let Ok(game_wrap) = game.to_owned().play(&Move::Normal {
-        //                 role: Role::Pawn,
-        //                 from: prev_click_pos,
-        //                 to: curr_click_pos,
-        //                 capture: curr_role_click,
-        //                 promotion: Some(Role::Queen),
-        //             }) {
-        //                 game = game_wrap;
-        //             }
-        //         }
-        //
-        //         match game.to_owned().play(&Move::Normal {
-        //             role: prev_role_click,
-        //             from: prev_click_pos,
-        //             to: curr_click_pos,
-        //             capture: curr_role_click,
-        //             promotion: None,
-        //         }) {
-        //             Ok(game_wrap) => game = game_wrap,
-        //
-        //             Err(_) => draw_error(
-        //                 ((curr_click_pos.file().char() as u32 - 'a' as u32) * SQR_SIZE) as i32,
-        //                 ((curr_click_pos.rank().flip_vertical().char() as u32 - '1' as u32)
-        //                     * SQR_SIZE) as i32,
-        //                 &mut canvas,
-        //             ),
-        //         }
-        //
-        //         if prev_role_click == Role::King {
-        //             if let Ok(game_wrap) = game.to_owned().play(&Move::Castle {
-        //                 king: prev_click_pos,
-        //                 rook: curr_click_pos,
-        //             }) {
-        //                 game = game_wrap;
-        //             }
-        //         }
-        //
-        //         if prev_role_click == Role::Pawn {
-        //             if let Ok(game_wrap) = game.to_owned().play(&Move::EnPassant {
-        //                 from: prev_click_pos,
-        //                 to: curr_click_pos,
-        //             }) {
-        //                 game = game_wrap;
-        //             }
-        //         }
-        //     }
-        // }
-        //
-        // if curr_mouse_buttons.is_empty() {
-        //     prev_role_click = game
-        //         .board()
-        //         .role_at(Square::from_coords(
-        //             File::new((mouse_state.x() / SQR_SIZE as i32) as u32),
-        //             Rank::new((mouse_state.y() / SQR_SIZE as i32) as u32).flip_vertical(),
-        //         ))
-        //         .unwrap_or(Role::Knight);
-        //
-        //     prev_click_pos = Square::from_coords(
-        //         File::new((mouse_state.x() / SQR_SIZE as i32) as u32),
-        //         Rank::new((mouse_state.y() / SQR_SIZE as i32) as u32).flip_vertical(),
-        //     );
-        // } else {
-        //     canvas
-        //         .copy(
-        //             curr_texture,
-        //             None,
-        //             Rect::new(
-        //                 (mouse_state.x() / SQR_SIZE as i32) * SQR_SIZE as i32,
-        //                 (mouse_state.y() / SQR_SIZE as i32) * SQR_SIZE as i32,
-        //                 SQR_SIZE,
-        //                 SQR_SIZE,
-        //             ),
-        //         )
-        //         .unwrap();
-        // }
-
-        canvas.present();
-
+        let is_mouse_released = &prev_mouse_buttons - &curr_mouse_buttons;
         prev_mouse_buttons = curr_mouse_buttons;
+        prev_role_click = curr_role_click;
+        prev_click_pos = curr_click_pos;
 
+        if !is_mouse_released.is_empty() {
+            curr_click_pos = None;
+            if let Some(pos) = get_mouse_position(mouse_state) {
+                curr_role_click = match game.is_occupied_by(pos) {
+                    None => None,
+                    Some(piece) => Some(piece.piecetype),
+                };
+            }
+            curr_click_pos = get_mouse_position(mouse_state);
+
+            println!("currtype : {:?}", curr_role_click);
+            println!("currpos {:?}", curr_click_pos);
+            println!("prevtype {:?}", prev_role_click);
+            println!("prevpos {:?}", prev_click_pos);
+
+            if let Some(piecetype) = prev_role_click {
+                if let Some(end) = curr_click_pos {
+                    let full_mv = Movement {
+                        piecetype: piecetype,
+                        start: prev_click_pos,
+                        end: end,
+                        promotion: false, //TODO manage promotion
+                        force_capture: false,
+                        offer_draw: false,
+                        withdraw: false,
+                        restart: false,
+                    };
+                    let mv = full_mv.to_string();
+                    if game.check_move(&mv).is_ok() {
+                        game = game.play_move_unchecked(&mv);
+                    }
+                }
+            }
+            // if game.get_turn() {
+            //     let is_mouse_released = &prev_mouse_buttons - &curr_mouse_buttons;
+            //     if !is_mouse_released.is_empty() {
+            //         curr_role_click = match game.is_occupied_by(Position(
+            //             ((mouse_state.x() / SQR_SIZE as i32) as u16) * 9
+            //                 + ((mouse_state.y() / SQR_SIZE as i32) as u16),
+            //         )) {
+            //             None => None,
+            //             Some(piece) => Some(piece.piecetype),
+            //         };
+            //         curr_click_pos = Position(
+            //             ((mouse_state.x() / SQR_SIZE as i32) as u16) * 9
+            //                 + (mouse_state.y() / SQR_SIZE as i32) as u16,
+            //         );
+            //
+            //         if prev_role_click == PieceType::Pawn && curr_click_pos.rank() == Rank::new(7) {
+            //             if let Ok(game_wrap) = game.to_owned().play(&Move::Normal {
+            //                 role: Role::Pawn,
+            //                 from: prev_click_pos,
+            //                 to: curr_click_pos,
+            //                 capture: curr_role_click,
+            //                 promotion: Some(Role::Queen),
+            //             }) {
+            //                 game = game_wrap;
+            //             }
+            //         }
+            //
+            //         match game.to_owned().play(&Move::Normal {
+            //             role: prev_role_click,
+            //             from: prev_click_pos,
+            //             to: curr_click_pos,
+            //             capture: curr_role_click,
+            //             promotion: None,
+            //         }) {
+            //             Ok(game_wrap) => game = game_wrap,
+            //
+            //             Err(_) => draw_error(
+            //                 ((curr_click_pos.file().char() as u32 - 'a' as u32) * SQR_SIZE) as i32,
+            //                 ((curr_click_pos.rank().flip_vertical().char() as u32 - '1' as u32)
+            //                     * SQR_SIZE) as i32,
+            //                 &mut canvas,
+            //             ),
+            //         }
+            //
+            //         if prev_role_click == Role::King {
+            //             if let Ok(game_wrap) = game.to_owned().play(&Move::Castle {
+            //                 king: prev_click_pos,
+            //                 rook: curr_click_pos,
+            //             }) {
+            //                 game = game_wrap;
+            //             }
+            //         }
+            //
+            //         if prev_role_click == Role::Pawn {
+            //             if let Ok(game_wrap) = game.to_owned().play(&Move::EnPassant {
+            //                 from: prev_click_pos,
+            //                 to: curr_click_pos,
+            //             }) {
+            //                 game = game_wrap;
+            //             }
+            //         }
+            //     }
+            // }
+            //
+            // if curr_mouse_buttons.is_empty() {
+            //     prev_role_click = game
+            //         .board()
+            //         .role_at(Square::from_coords(
+            //             File::new((mouse_state.x() / SQR_SIZE as i32) as u32),
+            //             Rank::new((mouse_state.y() / SQR_SIZE as i32) as u32).flip_vertical(),
+            //         ))
+            //         .unwrap_or(Role::Knight);
+            //
+            //     prev_click_pos = Square::from_coords(
+            //         File::new((mouse_state.x() / SQR_SIZE as i32) as u32),
+            //         Rank::new((mouse_state.y() / SQR_SIZE as i32) as u32).flip_vertical(),
+            //     );
+            // } else {
+            //     canvas
+            //         .copy(
+            //             curr_texture,
+            //             None,
+            //             Rect::new(
+            //                 (mouse_state.x() / SQR_SIZE as i32) * SQR_SIZE as i32,
+            //                 (mouse_state.y() / SQR_SIZE as i32) * SQR_SIZE as i32,
+            //                 SQR_SIZE,
+            //                 SQR_SIZE,
+            //             ),
+            //         )
+            //         .unwrap();
+            // }
+        };
+
+        draw_pieces(&mut canvas, &game);
+        canvas.present();
         // if you don't do this cpu usage will skyrocket to 100%
+        //
         events.wait_event_timeout(10);
+
         // events.poll_event();
+        //draw_check(&game, &mut canvas);
     };
 
-    if cfg!(target_os = "emscripten") {
-        emscripten_file::emscripten_mod::set_main_loop_callback(main_loop);
-    } else if cfg!(not(target_os = "emscripten")) {
-        loop {
-            main_loop();
-        }
+    loop {
+        main_loop();
     }
-
-    Ok(())
 }
 
 //-----------------------------------------------------------------------------------
@@ -354,7 +385,7 @@ fn draw_piece(canvas: &mut Canvas<Window>, game: &Board, texture: &Texture, i: P
             texture,
             None,
             Rect::new(
-                (i.0 as u32 % 9 * SQR_SIZE) as i32,
+                ((9 - (i.0 as u32 % 9) - 1) * SQR_SIZE) as i32,
                 (i.0 as u32 / 9 * SQR_SIZE) as i32,
                 SQR_SIZE,
                 SQR_SIZE,
@@ -388,6 +419,13 @@ fn draw_grid(canvas: &mut Canvas<Window>) {
 
 //----------------------------------------------------------------
 // TODO: make this actually work as expected
+
+fn draw_select(p: Position, canvas: &mut Canvas<Window>) {
+    canvas.set_draw_color(Color::RGB(5, 150, 5));
+    let x = (8 - p.0 % 9) * SQR_SIZE as u16;
+    let y = p.0 / 9 * SQR_SIZE as u16;
+    let _ = canvas.fill_rect(Rect::new(x as i32, y as i32, SQR_SIZE, SQR_SIZE));
+}
 
 fn draw_error(x: i32, y: i32, canvas: &mut Canvas<Window>) {
     canvas.set_draw_color(Color::RGB(255, 5, 5));
