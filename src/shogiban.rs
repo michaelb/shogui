@@ -4,6 +4,7 @@ extern crate shakmaty;
 use sdl2::event::Event;
 use sdl2::image::{InitFlag, LoadTexture};
 use sdl2::keyboard::Keycode;
+use sdl2::messagebox::{show_message_box, show_simple_message_box, MessageBoxFlag};
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::{Canvas, Texture};
@@ -181,19 +182,27 @@ pub fn init() -> Result<(), String> {
         for event in events.poll_iter() {
             // if esc is pressed, exit main loop
             // (consequently ending the program)
-            match event {
+            return match event {
                 Event::Quit { .. }
                 | Event::KeyDown {
                     keycode: Some(Keycode::Escape),
                     ..
-                } => return,
-                _ => {}
-            }
+                } => true,
+                _ => false,
+            };
         }
 
         if game.game_over() {
-            println!("{:?} has won the game", game.get_color());
-            return;
+            let who;
+            if game.get_turn() {
+                who = "second player";
+            } else {
+                who = "first player";
+            }
+            let message = [who, &"has won the game!"].join(" ");
+            println!("{}", message);
+            // show_simple_message_box(MessageBoxFlag::empty(), &"Game Over", &message, canvas);
+            return true;
         }
 
         let mouse_state = events.mouse_state();
@@ -269,97 +278,6 @@ pub fn init() -> Result<(), String> {
                     }
                 }
             }
-            // if game.get_turn() {
-            //     let is_mouse_released = &prev_mouse_buttons - &curr_mouse_buttons;
-            //     if !is_mouse_released.is_empty() {
-            //         curr_role_click = match game.is_occupied_by(Position(
-            //             ((mouse_state.x() / SQR_SIZE as i32) as u16) * 9
-            //                 + ((mouse_state.y() / SQR_SIZE as i32) as u16),
-            //         )) {
-            //             None => None,
-            //             Some(piece) => Some(piece.piecetype),
-            //         };
-            //         curr_click_pos = Position(
-            //             ((mouse_state.x() / SQR_SIZE as i32) as u16) * 9
-            //                 + (mouse_state.y() / SQR_SIZE as i32) as u16,
-            //         );
-            //
-            //         if prev_role_click == PieceType::Pawn && curr_click_pos.rank() == Rank::new(7) {
-            //             if let Ok(game_wrap) = game.to_owned().play(&Move::Normal {
-            //                 role: Role::Pawn,
-            //                 from: prev_click_pos,
-            //                 to: curr_click_pos,
-            //                 capture: curr_role_click,
-            //                 promotion: Some(Role::Queen),
-            //             }) {
-            //                 game = game_wrap;
-            //             }
-            //         }
-            //
-            //         match game.to_owned().play(&Move::Normal {
-            //             role: prev_role_click,
-            //             from: prev_click_pos,
-            //             to: curr_click_pos,
-            //             capture: curr_role_click,
-            //             promotion: None,
-            //         }) {
-            //             Ok(game_wrap) => game = game_wrap,
-            //
-            //             Err(_) => draw_error(
-            //                 ((curr_click_pos.file().char() as u32 - 'a' as u32) * SQR_SIZE) as i32,
-            //                 ((curr_click_pos.rank().flip_vertical().char() as u32 - '1' as u32)
-            //                     * SQR_SIZE) as i32,
-            //                 &mut canvas,
-            //             ),
-            //         }
-            //
-            //         if prev_role_click == Role::King {
-            //             if let Ok(game_wrap) = game.to_owned().play(&Move::Castle {
-            //                 king: prev_click_pos,
-            //                 rook: curr_click_pos,
-            //             }) {
-            //                 game = game_wrap;
-            //             }
-            //         }
-            //
-            //         if prev_role_click == Role::Pawn {
-            //             if let Ok(game_wrap) = game.to_owned().play(&Move::EnPassant {
-            //                 from: prev_click_pos,
-            //                 to: curr_click_pos,
-            //             }) {
-            //                 game = game_wrap;
-            //             }
-            //         }
-            //     }
-            // }
-            //
-            // if curr_mouse_buttons.is_empty() {
-            //     prev_role_click = game
-            //         .board()
-            //         .role_at(Square::from_coords(
-            //             File::new((mouse_state.x() / SQR_SIZE as i32) as u32),
-            //             Rank::new((mouse_state.y() / SQR_SIZE as i32) as u32).flip_vertical(),
-            //         ))
-            //         .unwrap_or(Role::Knight);
-            //
-            //     prev_click_pos = Square::from_coords(
-            //         File::new((mouse_state.x() / SQR_SIZE as i32) as u32),
-            //         Rank::new((mouse_state.y() / SQR_SIZE as i32) as u32).flip_vertical(),
-            //     );
-            // } else {
-            //     canvas
-            //         .copy(
-            //             curr_texture,
-            //             None,
-            //             Rect::new(
-            //                 (mouse_state.x() / SQR_SIZE as i32) * SQR_SIZE as i32,
-            //                 (mouse_state.y() / SQR_SIZE as i32) * SQR_SIZE as i32,
-            //                 SQR_SIZE,
-            //                 SQR_SIZE,
-            //             ),
-            //         )
-            //         .unwrap();
-            // }
         };
 
         draw_pieces(&mut canvas, &game);
@@ -367,14 +285,18 @@ pub fn init() -> Result<(), String> {
         // if you don't do this cpu usage will skyrocket to 100%
         //
         events.wait_event_timeout(10);
+        return false;
 
         // events.poll_event();
         //draw_check(&game, &mut canvas);
     };
 
     loop {
-        main_loop();
+        if main_loop() {
+            break;
+        }
     }
+    Ok(())
 }
 
 //-----------------------------------------------------------------------------------
