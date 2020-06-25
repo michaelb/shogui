@@ -11,5 +11,6 @@ https://github.com/Arsukeey/chess.git
 
 ## Gameplay
 
-- _To play_, simply drag and drop the pieces. If the movement isn't valid, the game won't let you play that move.
-- _To castle_, Drag the king to the rook.
+click (it will be "picked" automatically) on the piece you want to move, and put it at the desired location.
+
+Illegal moves will be prevented

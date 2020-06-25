@@ -4,7 +4,8 @@ extern crate shakmaty;
 use sdl2::event::Event;
 use sdl2::image::{InitFlag, LoadTexture};
 use sdl2::keyboard::Keycode;
-use sdl2::messagebox::{show_message_box, show_simple_message_box, MessageBoxFlag};
+use sdl2::messagebox::ClickedButton;
+use sdl2::messagebox::*;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::{Canvas, Texture};
@@ -12,7 +13,7 @@ use sdl2::video::Window;
 use std::{thread, time};
 
 // use shakmaty::{Board, Chess, File, Move, Position, Rank, Role, Setup, Square};
-use shogai::ai::*;
+// use shogai::ai::*;
 use shogai::board::*;
 use shogai::movement::*;
 use shogai::piece::*;
@@ -21,9 +22,7 @@ use shogai::position::*;
 use std::collections::HashSet;
 use std::path::Path;
 
-use crate::emscripten_file;
-
-const SRC_RESERVE_HEIGTH: u32 = 150;
+const SRC_RESERVE_HEIGTH: u32 = 100;
 const SCR_WIDTH: u32 = 603;
 const SCR_HEIGHT: u32 = 603 + 2 * SRC_RESERVE_HEIGTH;
 
@@ -153,10 +152,13 @@ pub fn init() -> Result<(), String> {
     // This will parse and draw all pieces currently on the game to the window.
     let draw_pieces = |canvas: &mut Canvas<Window>, game: &Board, hidden: Option<Piece>| {
         for piece in game.iter().filter(|&p| Some(*p) != hidden) {
+            //TODO filter "only once" to remove only on exemplary of pieces in reserve
             if let Some(i) = piece.position {
-                draw_piece(canvas, &game, piece_to_texture(piece), i);
+                draw_piece(canvas, piece_to_texture(piece), i);
+            } else {
+                draw_piece_on_reserve(canvas, piece_to_texture(piece), piece, 0);
+                //TODO manage drawing multiple identical pieces
             }
-            //else draw them on the reserve
         }
     };
 
@@ -231,7 +233,206 @@ pub fn init() -> Result<(), String> {
         canvas.clear();
 
         draw_shogiban(&mut canvas);
-        // AI
+        let mut human_play = || {
+            let get_texture = |game: &Board| {
+                if let Some(pos) = get_mouse_position(mouse_state) {
+                    match game.is_occupied_by(pos) {
+                        Some(piece) => piece_to_texture(&piece),
+                        None => &nothing,
+                    }
+                } else {
+                    &nothing
+                }
+            };
+            //select in green movable pieces on the board
+            if let Some(pos) = prev_click_pos {
+                if let Some(selected_piece) = game.is_occupied_by(pos) {
+                    if selected_piece.color == game.get_color() {
+                        draw_select(pos, &mut canvas);
+                    }
+                }
+            }
+            let is_mouse_released = &prev_mouse_buttons - &curr_mouse_buttons;
+            prev_mouse_buttons = curr_mouse_buttons.clone();
+            prev_role_click = curr_role_click;
+            prev_click_pos = curr_click_pos;
+
+            if !is_mouse_released.is_empty() {
+                curr_texture = get_texture(&game);
+            }
+
+            if !is_mouse_released.is_empty() {
+                if let Some(pos) = get_mouse_position(mouse_state) {
+                    curr_role_click = match game.is_occupied_by(pos) {
+                        None => None,
+                        Some(piece) => Some(piece.piecetype),
+                    };
+                    if let Some(piece) = game.is_occupied_by(pos) {
+                        if piece.color == game.get_color() {
+                            hidden = game.is_occupied_by(pos);
+                        } else {
+                            curr_role_click = None;
+                        }
+                    } else {
+                        hidden = None;
+                    }
+                } else if let Some(piecetype) = get_in_reserve(mouse_state) {
+                    //drag n drop from reserve (drop move)
+                    if game.iter().any(|p| {
+                        p.color == game.get_color()
+                            && p.piecetype == piecetype
+                            && p.position == None
+                    }) {
+                        curr_role_click = Some(piecetype);
+                        curr_click_pos = None;
+                        hidden = None;
+                    } else {
+                        curr_role_click = None;
+                        hidden = None;
+                    }
+                } else {
+                    curr_role_click = None;
+                    hidden = None;
+                }
+                curr_click_pos = get_mouse_position(mouse_state);
+
+                println!("currtype : {:?}", curr_role_click);
+                println!("currpos {:?}", curr_click_pos);
+                println!("prevtype {:?}", prev_role_click);
+                println!("prevpos {:?}", prev_click_pos);
+
+                if let Some(piecetype) = prev_role_click {
+                    if let Some(end) = curr_click_pos {
+                        let full_mv = Movement {
+                            piecetype: piecetype,
+                            start: prev_click_pos,
+                            end: end,
+                            promotion: false,
+                            force_capture: false,
+                            offer_draw: false,
+                            withdraw: false,
+                            restart: false,
+                        };
+                        let full_mv_with_promotion = Movement {
+                            promotion: true,
+                            ..full_mv
+                        };
+                        println!("{}{}", full_mv, full_mv_with_promotion);
+                        let res1 = game.check_move(&full_mv.to_string()).is_ok();
+                        let mut res2 = game.check_move(&full_mv_with_promotion.to_string()).is_ok()
+                            && (full_mv_with_promotion.to_string() != full_mv.to_string());
+                        if let Some(pos) = prev_click_pos {
+                            if let Some(piece) = game.is_occupied_by(pos) {
+                                if piece.promoted {
+                                    //no need to buzz the player if the piece is already promoted
+                                    res2 = false;
+                                }
+                            }
+                        }
+                        //^ necessary as to_string 'ing drops with promotion delete the
+                        //(impossible) promotion
+
+                        let chosen_move;
+                        if res1 && !res2 {
+                            chosen_move = full_mv;
+                        } else if res2 && !res1 {
+                            chosen_move = full_mv_with_promotion;
+                        } else if res1 && res2 {
+                            println!("{}{}", res1, res2);
+                            //ask wether to promote
+                            let buttons: Vec<_> = vec![
+                                ButtonData {
+                                    flags: MessageBoxButtonFlag::RETURNKEY_DEFAULT,
+                                    button_id: 1,
+                                    text: "Promote",
+                                },
+                                ButtonData {
+                                    flags: MessageBoxButtonFlag::NOTHING,
+                                    button_id: 2,
+                                    text: "Do not promote",
+                                },
+                            ];
+                            let res: ClickedButton = show_message_box(
+                                MessageBoxFlag::empty(),
+                                buttons.as_slice(),
+                                "",
+                                "Do you want to promote the piece ?",
+                                canvas.window(),
+                                None,
+                            )
+                            .unwrap();
+                            chosen_move = match res {
+                                ClickedButton::CloseButton => full_mv_with_promotion,
+                                ClickedButton::CustomButton(buttondata) => {
+                                    match buttondata.button_id {
+                                        1 => full_mv_with_promotion,
+                                        _ => full_mv,
+                                    }
+                                }
+                            };
+                        } else {
+                            chosen_move = full_mv; //to satisfy checker, but is caught later anyway
+                        }
+
+                        curr_role_click = None;
+                        curr_click_pos = None;
+                        let mv = chosen_move.to_string();
+                        if game.check_move(&mv).is_ok() {
+                            game = game.play_move_unchecked(&mv);
+                            curr_texture = &nothing;
+                            hidden = None;
+                        } else {
+                            hidden = None;
+                        }
+                    }
+                }
+            }
+
+            //drag effect
+            if let Some(_) = curr_role_click {
+                if let Some(pos) = curr_click_pos {
+                    //manage drag pieces from reserve
+                    if let Some(piece) = game.is_occupied_by(pos) {
+                        if piece.color == game.get_color() {
+                            let _ = canvas.copy(
+                                curr_texture,
+                                None,
+                                Rect::new(
+                                    mouse_state.x() as i32 - SQR_SIZE as i32 / 2,
+                                    mouse_state.y() as i32 - SQR_SIZE as i32 / 2,
+                                    SQR_SIZE,
+                                    SQR_SIZE,
+                                ),
+                            );
+                        }
+                    }
+                }
+            }
+            if let Some(_) = curr_role_click {
+                if let Some(piecetype) = curr_role_click {
+                    let drag_piece = Piece {
+                        color: game.get_color(),
+                        piecetype: piecetype,
+                        position: None,
+                        promoted: false,
+                    };
+                    curr_texture = piece_to_texture(&drag_piece);
+                    let _ = canvas.copy(
+                        curr_texture,
+                        None,
+                        Rect::new(
+                            mouse_state.x() as i32 - SQR_SIZE as i32 / 2,
+                            mouse_state.y() as i32 - SQR_SIZE as i32 / 2,
+                            SQR_SIZE,
+                            SQR_SIZE,
+                        ),
+                    );
+                }
+            }
+        };
+
+        human_play(); //for now, every turn is human
+                      // AI
 
         // if game.turn() == shakmaty::Color::Black {
         // game = game.to_owned().play(&ai::minimax_root(3, &mut game)).unwrap();
@@ -239,91 +440,10 @@ pub fn init() -> Result<(), String> {
 
         // Abandon all hope, ye who enter here.
         // while a mouse button is pressed, it will fall into this conditional
-        let get_texture = |game: &Board| {
-            // TODO: use filter here
-            // match is more readable than if let.
-            if let Some(pos) = get_mouse_position(mouse_state) {
-                match game.is_occupied_by(pos) {
-                    Some(piece) => piece_to_texture(&piece),
-                    None => &nothing,
-                }
-            } else {
-                &nothing
-            }
-        };
-        //select in green movable pieces on the board
-        if let Some(pos) = prev_click_pos {
-            if let Some(selected_piece) = game.is_occupied_by(pos) {
-                if selected_piece.color == game.get_color() {
-                    draw_select(pos, &mut canvas);
-                }
-            }
-        }
-        let is_mouse_released = &prev_mouse_buttons - &curr_mouse_buttons;
-        prev_mouse_buttons = curr_mouse_buttons.clone();
-        prev_role_click = curr_role_click;
-        prev_click_pos = curr_click_pos;
-
-        if !is_mouse_released.is_empty() {
-            curr_texture = get_texture(&game);
-        }
-
-        if !is_mouse_released.is_empty() {
-            if let Some(pos) = get_mouse_position(mouse_state) {
-                curr_role_click = match game.is_occupied_by(pos) {
-                    None => None,
-                    Some(piece) => Some(piece.piecetype),
-                };
-                hidden = game.is_occupied_by(pos);
-            } else {
-                curr_role_click = None; //manage reserve TODO
-                hidden = None;
-            }
-            curr_click_pos = get_mouse_position(mouse_state);
-
-            println!("currtype : {:?}", curr_role_click);
-            println!("currpos {:?}", curr_click_pos);
-            println!("prevtype {:?}", prev_role_click);
-            println!("prevpos {:?}", prev_click_pos);
-
-            if let Some(piecetype) = prev_role_click {
-                if let Some(end) = curr_click_pos {
-                    let full_mv = Movement {
-                        piecetype: piecetype,
-                        start: prev_click_pos,
-                        end: end,
-                        promotion: false, //TODO manage promotion
-                        force_capture: false,
-                        offer_draw: false,
-                        withdraw: false,
-                        restart: false,
-                    };
-                    let mv = full_mv.to_string();
-                    if game.check_move(&mv).is_ok() {
-                        game = game.play_move_unchecked(&mv);
-                        curr_texture = &nothing;
-                        hidden = None;
-                    }
-                }
-            }
-        }
-
-        if let Some(_) = curr_role_click {
-            let _ = canvas.copy(
-                curr_texture,
-                None,
-                Rect::new(
-                    mouse_state.x() as i32 - SQR_SIZE as i32 / 2,
-                    mouse_state.y() as i32 - SQR_SIZE as i32 / 2,
-                    SQR_SIZE,
-                    SQR_SIZE,
-                ),
-            );
-        }
         draw_pieces(&mut canvas, &game, hidden);
         canvas.present();
+
         // if you don't do this cpu usage will skyrocket to 100%
-        //
         events.wait_event_timeout(10);
 
         events.poll_event();
@@ -334,8 +454,39 @@ pub fn init() -> Result<(), String> {
 }
 
 //-----------------------------------------------------------------------------------
+//
 
-fn draw_piece(canvas: &mut Canvas<Window>, game: &Board, texture: &Texture, i: Position) {
+fn get_side(mouse_state: sdl2::mouse::MouseState) -> Option<shogai::piece::Color> {
+    if mouse_state.y() <= SRC_RESERVE_HEIGTH as i32 {
+        return Some(shogai::piece::Color::White);
+    }
+    if mouse_state.y() >= SCR_HEIGHT as i32 - SRC_RESERVE_HEIGTH as i32 {
+        return Some(shogai::piece::Color::Black);
+    }
+    return None;
+}
+
+fn get_in_reserve(mouse_state: sdl2::mouse::MouseState) -> Option<PieceType> {
+    if mouse_state.y() >= SRC_RESERVE_HEIGTH as i32
+        && mouse_state.y() <= SCR_HEIGHT as i32 - SRC_RESERVE_HEIGTH as i32
+    {
+        return None;
+    } else {
+        // in reserve
+        match mouse_state.x() * 7 / SCR_WIDTH as i32 {
+            0 => Some(PieceType::Pawn),
+            1 => Some(PieceType::Knight),
+            2 => Some(PieceType::Lance),
+            3 => Some(PieceType::Rook),
+            4 => Some(PieceType::Bishop),
+            5 => Some(PieceType::Gold),
+            6 => Some(PieceType::Silver),
+            _ => None,
+        }
+    }
+}
+
+fn draw_piece(canvas: &mut Canvas<Window>, texture: &Texture, i: Position) {
     canvas
         .copy(
             texture,
@@ -346,6 +497,38 @@ fn draw_piece(canvas: &mut Canvas<Window>, game: &Board, texture: &Texture, i: P
                 SQR_SIZE,
                 SQR_SIZE,
             ),
+        )
+        .unwrap();
+}
+
+fn draw_piece_on_reserve(
+    canvas: &mut Canvas<Window>,
+    texture: &Texture,
+    piece: &Piece,
+    count: isize,
+) {
+    let x = match piece.piecetype {
+        PieceType::Pawn => 0,
+        PieceType::Knight => 1,
+        PieceType::Lance => 2,
+        PieceType::Rook => 3,
+        PieceType::Bishop => 4,
+        PieceType::Gold => 5,
+        PieceType::Silver => 6,
+        PieceType::King => panic!("King was found in reserve, what kind of shit is this?"),
+    };
+    let spacing_multiplier = 10; //pixels per identical pieces
+    let y: isize;
+    if piece.color == shogai::piece::Color::White {
+        y = (count + 1) * spacing_multiplier;
+    } else {
+        y = SCR_HEIGHT as isize - SQR_SIZE as isize - (count + 1) * spacing_multiplier;
+    }
+    canvas
+        .copy(
+            texture,
+            None,
+            Rect::new((x * SCR_WIDTH / 7) as i32, y as i32, SQR_SIZE, SQR_SIZE),
         )
         .unwrap();
 }
@@ -389,7 +572,6 @@ fn draw_grid(canvas: &mut Canvas<Window>) {
 }
 
 //----------------------------------------------------------------
-// TODO: make this actually work as expected
 
 fn draw_select(p: Position, canvas: &mut Canvas<Window>) {
     canvas.set_draw_color(Color::RGB(5, 150, 5));
