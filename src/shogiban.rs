@@ -10,7 +10,6 @@ use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::{Canvas, Texture};
 use sdl2::video::Window;
-use std::{thread, time};
 
 // use shakmaty::{Board, Chess, File, Move, Position, Rank, Role, Setup, Square};
 // use shogai::ai::*;
@@ -314,11 +313,6 @@ pub fn init() -> Result<(), String> {
                 }
                 curr_click_pos = get_mouse_position(mouse_state);
 
-                println!("currtype : {:?}", curr_role_click);
-                println!("currpos {:?}", curr_click_pos);
-                println!("prevtype {:?}", prev_role_click);
-                println!("prevpos {:?}", prev_click_pos);
-
                 if let Some(piecetype) = prev_role_click {
                     if let Some(end) = curr_click_pos {
                         let full_mv = Movement {
@@ -601,47 +595,3 @@ fn draw_select(p: Position, canvas: &mut Canvas<Window>) {
     let y = p.0 / 9 * SQR_SIZE as u16 + SRC_RESERVE_HEIGTH as u16;
     let _ = canvas.fill_rect(Rect::new(x as i32, y as i32, SQR_SIZE, SQR_SIZE));
 }
-
-fn draw_error(x: i32, y: i32, canvas: &mut Canvas<Window>) {
-    canvas.set_draw_color(Color::RGB(255, 5, 5));
-    let _ = canvas.fill_rect(Rect::new(x, y, SQR_SIZE, SQR_SIZE));
-    thread::sleep(time::Duration::from_millis(100));
-}
-//
-// fn draw_check(game: &Board, canvas: &mut Canvas<Window>) {
-//     let pieces = game.board().pieces();
-//     let mut white_king_pos: Square = Square::new(0);
-//     let mut black_king_pos: Square = Square::new(0);
-//
-//     for i in 0..pieces.len() {
-//         pieces
-//             .to_owned()
-//             .nth(i)
-//             .filter(|piece| piece.1.role == Role::King)
-//             .map(|piece| {
-//                 if piece.1.color == shakmaty::Color::White {
-//                     white_king_pos = piece.to_owned().0;
-//                 } else {
-//                     black_king_pos = piece.to_owned().0;
-//                 }
-//             });
-//     }
-//
-//     if game.is_check() {
-//         let x: i32;
-//         let y: i32;
-//
-//         if game.turn() == shakmaty::Color::White {
-//             x = ((white_king_pos.file().char() as u32 - 'a' as u32) * SQR_SIZE) as i32;
-//             y = ((white_king_pos.rank().flip_vertical().char() as u32 - '1' as u32) * SQR_SIZE)
-//                 as i32;
-//         } else {
-//             x = ((black_king_pos.file().char() as u32 - 'a' as u32) * SQR_SIZE) as i32;
-//             y = ((black_king_pos.rank().flip_vertical().char() as u32 - '1' as u32) * SQR_SIZE)
-//                 as i32;
-//         }
-//
-//         canvas.set_draw_color(Color::RGB(255, 5, 5));
-//         let _ = canvas.fill_rect(Rect::new(x, y, SQR_SIZE, SQR_SIZE));
-//     }
-// }
