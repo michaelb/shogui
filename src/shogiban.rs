@@ -151,12 +151,18 @@ pub fn init() -> Result<(), String> {
 
     // This will parse and draw all pieces currently on the game to the window.
     let draw_pieces = |canvas: &mut Canvas<Window>, game: &Board, hidden: Option<Piece>| {
-        for piece in game.iter().filter(|&p| Some(*p) != hidden) {
+        let mut piece_hidden = false;
+        for (j, piece) in game.iter().enumerate() {
             //TODO filter "only once" to remove only on exemplary of pieces in reserve
+            if !piece_hidden && Some(*piece) == hidden {
+                piece_hidden = true;
+                continue;
+            }
             if let Some(i) = piece.position {
                 draw_piece(canvas, piece_to_texture(piece), i);
             } else {
-                draw_piece_on_reserve(canvas, piece_to_texture(piece), piece, 0);
+                let count = game.iter().take(j).filter(|p| p == &piece).count();
+                draw_piece_on_reserve(canvas, piece_to_texture(piece), piece, count);
                 //TODO manage drawing multiple identical pieces
             }
         }
@@ -191,6 +197,8 @@ pub fn init() -> Result<(), String> {
     let mut curr_click_pos: Option<Position> = None;
     let mut prev_mouse_buttons = HashSet::new();
 
+    let mut has_played = false;
+
     //main loop start ####################################
     //####################################################
     //###################################################
@@ -209,22 +217,27 @@ pub fn init() -> Result<(), String> {
             };
         }
 
-        if game.game_over() {
-            let who;
-            if game.get_turn() {
-                who = "second player";
-            } else {
-                who = "first player";
+        if has_played {
+            //game_over check is *very* expensive, don't do it everytime or UI lag
+            //also may be used for future multithreading
+            has_played = false;
+            if game.game_over() {
+                let who;
+                if game.get_turn() {
+                    who = "second player";
+                } else {
+                    who = "first player";
+                }
+                let message = [who, &"has won the game!"].join(" ");
+                println!("{}", message);
+                return show_simple_message_box(
+                    MessageBoxFlag::empty(),
+                    &"Game Over",
+                    &message,
+                    canvas.window(),
+                )
+                .map_err(|e| e.to_string());
             }
-            let message = [who, &"has won the game!"].join(" ");
-            println!("{}", message);
-            return show_simple_message_box(
-                MessageBoxFlag::empty(),
-                &"Game Over",
-                &message,
-                canvas.window(),
-            )
-            .map_err(|e| e.to_string());
         }
 
         let mouse_state = events.mouse_state();
@@ -276,7 +289,7 @@ pub fn init() -> Result<(), String> {
                     } else {
                         hidden = None;
                     }
-                } else if let Some(piecetype) = get_in_reserve(mouse_state) {
+                } else if let Some(piecetype) = get_in_reserve(mouse_state, &game) {
                     //drag n drop from reserve (drop move)
                     if game.iter().any(|p| {
                         p.color == game.get_color()
@@ -285,7 +298,12 @@ pub fn init() -> Result<(), String> {
                     }) {
                         curr_role_click = Some(piecetype);
                         curr_click_pos = None;
-                        hidden = None;
+                        hidden = Some(Piece {
+                            color: game.get_color(),
+                            piecetype: piecetype,
+                            position: None,
+                            promoted: false,
+                        });
                     } else {
                         curr_role_click = None;
                         hidden = None;
@@ -317,7 +335,6 @@ pub fn init() -> Result<(), String> {
                             promotion: true,
                             ..full_mv
                         };
-                        println!("{}{}", full_mv, full_mv_with_promotion);
                         let res1 = game.check_move(&full_mv.to_string()).is_ok();
                         let mut res2 = game.check_move(&full_mv_with_promotion.to_string()).is_ok()
                             && (full_mv_with_promotion.to_string() != full_mv.to_string());
@@ -381,6 +398,7 @@ pub fn init() -> Result<(), String> {
                             game = game.play_move_unchecked(&mv);
                             curr_texture = &nothing;
                             hidden = None;
+                            has_played = true;
                         } else {
                             hidden = None;
                         }
@@ -408,8 +426,8 @@ pub fn init() -> Result<(), String> {
                     }
                 }
             }
-            if let Some(_) = curr_role_click {
-                if let Some(piecetype) = curr_role_click {
+            if let Some(piecetype) = curr_role_click {
+                if let None = curr_click_pos {
                     let drag_piece = Piece {
                         color: game.get_color(),
                         piecetype: piecetype,
@@ -432,14 +450,9 @@ pub fn init() -> Result<(), String> {
         };
 
         human_play(); //for now, every turn is human
-                      // AI
 
-        // if game.turn() == shakmaty::Color::Black {
-        // game = game.to_owned().play(&ai::minimax_root(3, &mut game)).unwrap();
-        // }
+        // for AI play, don't forget to multithread and make use of the has_played flag
 
-        // Abandon all hope, ye who enter here.
-        // while a mouse button is pressed, it will fall into this conditional
         draw_pieces(&mut canvas, &game, hidden);
         canvas.present();
 
@@ -466,21 +479,21 @@ fn get_side(mouse_state: sdl2::mouse::MouseState) -> Option<shogai::piece::Color
     return None;
 }
 
-fn get_in_reserve(mouse_state: sdl2::mouse::MouseState) -> Option<PieceType> {
-    if mouse_state.y() >= SRC_RESERVE_HEIGTH as i32
-        && mouse_state.y() <= SCR_HEIGHT as i32 - SRC_RESERVE_HEIGTH as i32
-    {
+fn get_in_reserve(mouse_state: sdl2::mouse::MouseState, game: &Board) -> Option<PieceType> {
+    if Some(game.get_color()) != get_side(mouse_state) {
         return None;
     } else {
         // in reserve
-        match mouse_state.x() * 7 / SCR_WIDTH as i32 {
+        match mouse_state.x() * 9 / SCR_WIDTH as i32 {
             0 => Some(PieceType::Pawn),
-            1 => Some(PieceType::Knight),
-            2 => Some(PieceType::Lance),
-            3 => Some(PieceType::Rook),
-            4 => Some(PieceType::Bishop),
-            5 => Some(PieceType::Gold),
-            6 => Some(PieceType::Silver),
+            1 => Some(PieceType::Pawn),
+            2 => Some(PieceType::Pawn),
+            3 => Some(PieceType::Knight),
+            4 => Some(PieceType::Lance),
+            5 => Some(PieceType::Rook),
+            6 => Some(PieceType::Bishop),
+            7 => Some(PieceType::Gold),
+            8 => Some(PieceType::Silver),
             _ => None,
         }
     }
@@ -505,30 +518,39 @@ fn draw_piece_on_reserve(
     canvas: &mut Canvas<Window>,
     texture: &Texture,
     piece: &Piece,
-    count: isize,
+    count: usize,
 ) {
-    let x = match piece.piecetype {
+    let mut x = 2 * match piece.piecetype {
         PieceType::Pawn => 0,
-        PieceType::Knight => 1,
-        PieceType::Lance => 2,
-        PieceType::Rook => 3,
-        PieceType::Bishop => 4,
-        PieceType::Gold => 5,
-        PieceType::Silver => 6,
+        PieceType::Knight => 3,
+        PieceType::Lance => 4,
+        PieceType::Rook => 5,
+        PieceType::Bishop => 6,
+        PieceType::Gold => 7,
+        PieceType::Silver => 8,
         PieceType::King => panic!("King was found in reserve, what kind of shit is this?"),
     };
     let spacing_multiplier = 10; //pixels per identical pieces
-    let y: isize;
+    let y: usize;
     if piece.color == shogai::piece::Color::White {
-        y = (count + 1) * spacing_multiplier;
+        y = (count % 4) * spacing_multiplier;
     } else {
-        y = SCR_HEIGHT as isize - SQR_SIZE as isize - (count + 1) * spacing_multiplier;
+        y = SCR_HEIGHT as usize - SQR_SIZE as usize - (count % 4) * spacing_multiplier;
+    }
+    if x == 0 {
+        //only for pawns as there can be many pawns
+        x += count / 4;
     }
     canvas
         .copy(
             texture,
             None,
-            Rect::new((x * SCR_WIDTH / 7) as i32, y as i32, SQR_SIZE, SQR_SIZE),
+            Rect::new(
+                x as i32 * SCR_WIDTH as i32 / 9 / 2,
+                y as i32,
+                SQR_SIZE,
+                SQR_SIZE,
+            ),
         )
         .unwrap();
 }
