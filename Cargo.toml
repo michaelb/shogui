@@ -1,5 +1,5 @@
 [package]
-name = "shogai"
+name = "shogui"
 version = "0.1.0"
 authors = ["Lucas Micheloni <lucas.michelonidesouza@gmail.com>","Michael Bleuez michaek.bleuez2@gmail.com"]
 edition = "2018"
