@@ -228,7 +228,6 @@ pub fn init() -> Result<(), String> {
                     who = "first player";
                 }
                 let message = [who, &"has won the game!"].join(" ");
-                println!("{}", message);
                 return show_simple_message_box(
                     MessageBoxFlag::empty(),
                     &"Game Over",
@@ -245,7 +244,7 @@ pub fn init() -> Result<(), String> {
         canvas.clear();
 
         draw_shogiban(&mut canvas);
-        let mut human_play = || {
+        let mut human_play = |game: &mut Board| {
             let get_texture = |game: &Board| {
                 if let Some(pos) = get_mouse_position(mouse_state) {
                     match game.is_occupied_by(pos) {
@@ -349,7 +348,6 @@ pub fn init() -> Result<(), String> {
                         } else if res2 && !res1 {
                             chosen_move = full_mv_with_promotion;
                         } else if res1 && res2 {
-                            println!("{}{}", res1, res2);
                             //ask wether to promote
                             let buttons: Vec<_> = vec![
                                 ButtonData {
@@ -389,7 +387,7 @@ pub fn init() -> Result<(), String> {
                         curr_click_pos = None;
                         let mv = chosen_move.to_string();
                         if game.check_move(&mv).is_ok() {
-                            game = game.play_move_unchecked(&mv);
+                            *game = game.play_move_unchecked(&mv);
                             curr_texture = &nothing;
                             hidden = None;
                             has_played = true;
@@ -443,9 +441,23 @@ pub fn init() -> Result<(), String> {
             }
         };
 
-        human_play(); //for now, every turn is human
+        let human_turn = game.get_turn();
+        if human_turn {
+            human_play(&mut game); //for çnow, every turn is human
+        } else {
+            let mv = shogai::ai::greedy(&game);
+            game = game.play_move(&mv);
+            has_played = true;
+        }
 
-        // for AI play, don't forget to multithread and make use of the has_played flag
+        // for AI play, don't forget to  maybe multithread and make use of the has_played flag to
+        // reduce game_over checks
+        // ai should look like this
+        // if turn of AI {
+        // mv = ai guess move
+        // game.play(move)
+        // has_played = true
+        //}
 
         draw_pieces(&mut canvas, &game, hidden);
         canvas.present();
