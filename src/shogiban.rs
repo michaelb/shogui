@@ -1,6 +1,3 @@
-extern crate sdl2;
-extern crate shakmaty;
-
 use sdl2::event::Event;
 use sdl2::image::{InitFlag, LoadTexture};
 use sdl2::keyboard::Keycode;
