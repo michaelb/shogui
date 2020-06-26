@@ -1,11 +1,10 @@
 [package]
-name = "chess"
-version = "0.3.0"
-authors = ["Lucas Micheloni <lucas.michelonidesouza@gmail.com>"]
+name = "shogai"
+version = "0.1.0"
+authors = ["Lucas Micheloni <lucas.michelonidesouza@gmail.com>","Michael Bleuez michaek.bleuez2@gmail.com"]
 edition = "2018"
 
 [dependencies]
-shakmaty = "0.15.0"
 shogai="*"
 
 
