@@ -1,5 +1,7 @@
 # shogi GUI
 
+[![Shogai](https://img.shields.io/badge/Shogai-v2.0.0-green.svg)](https://github.com/michaelb/shogai)
+
 ## Licence
 
 This project is dual-licensed under zlib and GNU GPL v3 (recipients may choose to respect one or the other at their discretion)
