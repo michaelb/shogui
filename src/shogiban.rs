@@ -437,9 +437,9 @@ pub fn init() -> Result<(), String> {
             }
         };
 
-        let human_turn = game.get_turn();
+        let human_turn = !game.get_turn();
         if human_turn {
-            human_play(&mut game); //for çnow, every turn is human
+            human_play(&mut game);
         } else {
             let mv = shogai::ai::greedy(&game);
             game = game.play_move(&mv);
