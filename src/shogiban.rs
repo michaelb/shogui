@@ -317,7 +317,6 @@ pub fn init() -> Result<(), String> {
                             end: end,
                             promotion: false,
                             force_capture: false,
-                            offer_draw: false,
                             withdraw: false,
                             restart: false,
                         };
