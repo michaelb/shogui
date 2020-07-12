@@ -16,6 +16,11 @@ https://github.com/Arsukeey/chess.git
 
 ## Gameplay
 
-click (it will be "picked" automatically) on the piece you want to move, and put it at the desired location.
+clone and then cargo run --release, or build (--release) and run the executable
+
+To play against a stupid bot (hardcoded for now), you can:
+
+- Click (it will be "picked" automatically) on the piece you want to move
+- Put it at the desired location.
 
 Illegal moves will be prevented
