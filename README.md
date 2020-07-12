@@ -2,6 +2,8 @@
 
 [![Shogai](https://img.shields.io/badge/Shogai-v2.0.0-green.svg)](https://github.com/michaelb/shogai)
 
+![](screen.png)
+
 ## Licence
 
 This project is dual-licensed under zlib and GNU GPL v3 (recipients may choose to respect one or the other at their discretion)
@@ -9,6 +11,7 @@ This project is dual-licensed under zlib and GNU GPL v3 (recipients may choose t
 (non usi compliant, works in tandem with michaelb/shogai. Other features may be considered)
 
 This project is a fork of Arsukeey/chess, big thumbs up to him/her!
+
 https://github.com/Arsukeey/chess.git
 
 ## Gameplay
