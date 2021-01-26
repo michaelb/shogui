@@ -14,6 +14,15 @@ This project is a fork of Arsukeey/chess, big thumbs up to him/her!
 
 https://github.com/Arsukeey/chess.git
 
+
+### Dependencies
+ - SDL2
+ - SDL_Image
+ 
+ (usually available from your distribution's repositories)
+
+
+
 ## Gameplay
 
 clone and then cargo run --release, or build (--release) and run the executable
