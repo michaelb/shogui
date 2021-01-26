@@ -17,7 +17,7 @@ https://github.com/Arsukeey/chess.git
 
 ### Dependencies
  - SDL2
- - SDL_Image
+ - SDL2_Image
  
  (usually available from your distribution's repositories)
 
